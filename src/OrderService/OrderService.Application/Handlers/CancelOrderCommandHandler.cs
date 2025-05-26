@@ -33,22 +33,26 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, boo
             return false;
         }
 
-        // Add domain logic: e.g., order can only be cancelled if not Shipped or Completed.
-        if (order.Status == OrderStatus.Shipped || order.Status == OrderStatus.Completed)
+        switch (order.Status)
         {
-            _logger.LogWarning("Order {OrderId} is already {Status} and cannot be cancelled.", order.Id, order.Status);
-            return false; // Or throw new InvalidOperationException($"Order {order.Id} cannot be cancelled from status {order.Status}.");
-        }
-        if (order.Status == OrderStatus.Cancelled)
-        {
-            _logger.LogInformation("Order {OrderId} is already cancelled.", order.Id);
-            return true; // Already in desired state
+            // Add domain logic: e.g., order can only be cancelled if not Shipped or Completed.
+            case OrderStatus.Shipped:
+            case OrderStatus.Completed:
+                _logger.LogWarning("Order {OrderId} is already {Status} and cannot be cancelled.", order.Id, order.Status);
+                return false;
+            case OrderStatus.Cancelled:
+                _logger.LogInformation("Order {OrderId} is already cancelled.", order.Id);
+                return true; // Already in desired state
+            case OrderStatus.Pending:
+            case OrderStatus.Processing:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
 
         var cancelledDate = DateTimeOffset.UtcNow;
         order.SetStatus(OrderStatus.Cancelled);
-        // You might want to store the cancellation reason on the Order entity.
-        // order.CancellationReason = request.Reason;
+        order.CancellationReason = request.Reason;
 
         await _orderRepository.UpdateAsync(order, cancellationToken);
         _logger.LogInformation("Order {OrderId} status updated to Cancelled. Reason: {Reason}", order.Id, request.Reason ?? "N/A");

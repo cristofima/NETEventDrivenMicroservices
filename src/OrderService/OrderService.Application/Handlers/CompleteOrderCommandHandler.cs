@@ -37,7 +37,7 @@ public class CompleteOrderCommandHandler : IRequestHandler<CompleteOrderCommand,
         if (order.Status != OrderStatus.Shipped)
         {
             _logger.LogWarning("Order {OrderId} is not in Shipped state. Current state: {Status}. Cannot complete.", order.Id, order.Status);
-            return false; // Or throw new InvalidOperationException($"Order {order.Id} cannot be completed from status {order.Status}.");
+            return false;
         }
 
         var completedDate = DateTimeOffset.UtcNow;

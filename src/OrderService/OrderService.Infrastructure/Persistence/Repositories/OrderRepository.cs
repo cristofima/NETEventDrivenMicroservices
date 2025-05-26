@@ -30,13 +30,8 @@ public class OrderRepository : IOrderRepository
 
     public async Task UpdateAsync(Order order, CancellationToken cancellationToken = default)
     {
-        // EF Core automatically tracks changes to entities retrieved from the context.
-        // So, if 'order' was retrieved using GetByIdAsync from the same context instance
-        // and then modified, SaveChangesAsync is enough.
-        // If 'order' is a detached entity or from a different context, you might need:
-        // _context.Orders.Update(order);
-        // However, since GetByIdAsync is used in handlers, the entity should be tracked.
-        _context.Entry(order).State = EntityState.Modified; // Explicitly mark as modified
+        _context.Entry(order).State = EntityState.Modified;
+
         try
         {
             await _context.SaveChangesAsync(cancellationToken);

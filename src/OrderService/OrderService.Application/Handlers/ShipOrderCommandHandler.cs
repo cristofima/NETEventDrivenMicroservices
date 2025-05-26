@@ -37,14 +37,12 @@ public class ShipOrderCommandHandler : IRequestHandler<ShipOrderCommand, bool>
         if (order.Status != OrderStatus.Processing)
         {
             _logger.LogWarning("Order {OrderId} is not in Processing state. Current state: {Status}. Cannot ship.", order.Id, order.Status);
-            // Consider throwing an InvalidOperationException or returning a specific error response.
-            return false; // Or throw new InvalidOperationException($"Order {order.Id} cannot be shipped from status {order.Status}.");
+            return false;
         }
 
         var shippedDate = DateTimeOffset.UtcNow;
         order.SetStatus(OrderStatus.Shipped);
-        // You might want to store trackingNumber on the Order entity if it's relevant.
-        // order.TrackingNumber = request.TrackingNumber;
+        order.TrackingNumber = request.TrackingNumber;
 
         await _orderRepository.UpdateAsync(order, cancellationToken);
         _logger.LogInformation("Order {OrderId} status updated to Shipped. Tracking: {TrackingNumber}", order.Id, request.TrackingNumber ?? "N/A");

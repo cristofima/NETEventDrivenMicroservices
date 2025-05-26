@@ -177,7 +177,7 @@ public class OrderEventsHandler : BackgroundService
         return Task.CompletedTask;
     }
 
-    public override async Task StopAsync(CancellationToken stoppingToken)
+    public override async Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("OrderEventsHandler stopping. Disposing resources.");
         if (_processor != null)
@@ -188,7 +188,7 @@ public class OrderEventsHandler : BackgroundService
         {
             await _serviceBusClient.DisposeAsync();
         }
-        await base.StopAsync(stoppingToken);
+        await base.StopAsync(cancellationToken);
         _logger.LogInformation("OrderEventsHandler stopped and resources disposed.");
     }
 }

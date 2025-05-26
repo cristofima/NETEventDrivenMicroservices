@@ -24,20 +24,17 @@ public static class DependencyInjection
         services.AddDbContext<OrderDbContext>(options =>
             options.UseSqlServer(connectionString, sqlOptions =>
             {
-                // Optional: Configure for resiliency
-                // sqlOptions.EnableRetryOnFailure(
-                //     maxRetryCount: 5,
-                //     maxRetryDelay: TimeSpan.FromSeconds(30),
-                //     errorNumbersToAdd: null);
+                // Configure for resiliency
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorNumbersToAdd: null);
             }));
 
         // Register Repositories
         services.AddScoped<IOrderRepository, OrderRepository>();
-        // Add other repositories here if any
 
         // Register Event Publisher
-        // ServiceBusClient and Sender are managed internally by ServiceBusEventPublisher
-        // and are designed to be long-lived, so Singleton is appropriate here.
         services.AddSingleton<IEventPublisher, ServiceBusEventPublisher>();
 
         return services;

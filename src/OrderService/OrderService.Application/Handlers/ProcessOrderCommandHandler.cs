@@ -34,22 +34,11 @@ public class ProcessOrderCommandHandler : IRequestHandler<ProcessOrderCommand, b
         }
 
         // Add domain logic here if needed to check if the order can be processed
-        // For example, check current status: if (order.Status != OrderStatus.Pending) throw new InvalidOperationException("Order cannot be processed.");
+        if (order.Status != OrderStatus.Pending) return false;
 
         var processedDate = DateTimeOffset.UtcNow;
         order.SetStatus(OrderStatus.Processing);
-        // In a real scenario, you might have specific properties to update when an order is processed.
-        // order.ProcessedDate = processedDate; (if Order entity had such a property)
 
-        // EF Core tracks changes, so calling SaveChangesAsync on the DbContext
-        // (which OrderRepository's AddAsync/UpdateAsync would do) will persist the status change.
-        // We assume IOrderRepository.UpdateAsync or similar persists changes.
-        // For this example, let's ensure the repository handles the update.
-        // If IOrderRepository doesn't have an explicit UpdateAsync, it implies SaveChanges is handled at a higher level (e.g., Unit of Work)
-        // or that AddAsync also handles updates if the entity is tracked.
-        // For simplicity, let's assume GetByIdAsync tracks the entity, and SaveChangesAsync is called by the repository or UoW.
-        // If using a generic repository that doesn't call SaveChanges, you'd need to call it here or ensure the UoW does.
-        // Let's refine IOrderRepository to include an UpdateAsync method.
         await _orderRepository.UpdateAsync(order, cancellationToken);
 
         _logger.LogInformation("Order {OrderId} status updated to Processing.", order.Id);

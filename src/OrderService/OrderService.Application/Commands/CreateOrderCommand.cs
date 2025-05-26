@@ -5,7 +5,7 @@ namespace OrderService.Application.Commands;
 public class CreateOrderCommand : IRequest<Guid>
 {
     public string CustomerId { get; set; }
-    public List<OrderItemDto> ProductItems { get; set; } = new();
+    public List<OrderItemDto> ProductItems { get; set; }
 
     public CreateOrderCommand(string customerId, List<OrderItemDto> productItems)
     {
