@@ -8,7 +8,6 @@ trigger:
 variables:
   buildConfiguration: 'Release'
   solution: 'EventDrivenMicroservicesSolution.sln'
-  SONAR_SCANNER_MODE: 'MSBuild'
   
 pool:
   vmImage: 'windows-latest'
@@ -26,7 +25,7 @@ steps:
     inputs:
       SonarCloud: 'SonarCloud'
       organization: '$(SONAR_ORGANIZATION)'
-      scannerMode: 'MSBuild'
+      scannerMode: 'dotnet'
       projectKey: '$(SONAR_PROJECT_KEY)'
       projectName: 'EventDrivenMicroservicesSolution'
       extraProperties: |
