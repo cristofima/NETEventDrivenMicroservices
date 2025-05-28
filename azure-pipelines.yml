@@ -9,7 +9,7 @@ variables:
   buildConfiguration: 'Release'
   solution: 'EventDrivenMicroservicesSolution.sln'
   SONAR_SCANNER_MODE: 'MSBuild'
-
+  
 pool:
   vmImage: 'windows-latest'
 
@@ -21,7 +21,7 @@ steps:
       version: '9.x'
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
-  - task: SonarCloudPrepare@1
+  - task: SonarCloudPrepare@2
     displayName: 'Prepare SonarCloud Analysis'
     inputs:
       SonarCloud: 'SonarCloud'
@@ -62,16 +62,16 @@ steps:
       targetdir: '$(Build.ArtifactStagingDirectory)/CoverageReport'
       reporttypes: 'HtmlInline_AzurePipelines;Cobertura'
 
-  - task: PublishCodeCoverageResults@1
+  - task: PublishCodeCoverageResults@2
     displayName: 'Publish Code Coverage to Azure DevOps'
     inputs:
       codeCoverageTool: 'Cobertura'
       summaryFileLocation: '$(Build.ArtifactStagingDirectory)/CoverageReport/Cobertura.xml'
 
-  - task: SonarCloudAnalyze@1
+  - task: SonarCloudAnalyze@2
     displayName: 'Run SonarCloud Analysis'
 
-  - task: SonarCloudPublish@1
+  - task: SonarCloudPublish@2
     displayName: 'Publish SonarCloud Results'
     inputs:
       pollingTimeoutSec: '300'
