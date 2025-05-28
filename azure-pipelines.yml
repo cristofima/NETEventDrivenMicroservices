@@ -1,0 +1,80 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - feature/*
+
+variables:
+  buildConfiguration: 'Release'
+  solution: 'EventDrivenMicroservicesSolution.sln'
+  SONAR_SCANNER_MODE: 'MSBuild'
+  SONAR_PROJECT_KEY: $(SONAR_PROJECT_KEY)
+  SONAR_ORGANIZATION: $(SONAR_ORGANIZATION)
+  SONAR_TOKEN: $(SONAR_TOKEN)
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+  - task: UseDotNet@2
+    displayName: 'Use .NET SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '9.x.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+
+  - task: SonarCloudPrepare@1
+    displayName: 'Prepare SonarCloud Analysis'
+    inputs:
+      SonarCloud: 'SonarCloud'
+      organization: '$(SONAR_ORGANIZATION)'
+      scannerMode: 'MSBuild'
+      projectKey: '$(SONAR_PROJECT_KEY)'
+      projectName: 'EventDrivenMicroservicesSolution'
+      extraProperties: |
+        sonar.exclusions=**/bin/**,**/obj/**
+        sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/**/coverage.opencover.xml
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Restore NuGet packages'
+    inputs:
+      command: 'restore'
+      projects: '$(solution)'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Build Solution'
+    inputs:
+      command: 'build'
+      projects: '$(solution)'
+      arguments: '--configuration $(buildConfiguration)'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Run Tests with Code Coverage'
+    inputs:
+      command: 'test'
+      projects: |
+        **/tests/**/*.csproj
+      arguments: '--configuration $(buildConfiguration) --collect:"XPlat Code Coverage"'
+      publishTestResults: true
+
+  - task: ReportGenerator@5
+    displayName: 'Generate Code Coverage Report'
+    inputs:
+      reports: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+      targetdir: '$(Build.ArtifactStagingDirectory)/CoverageReport'
+      reporttypes: 'HtmlInline_AzurePipelines;Cobertura'
+
+  - task: PublishCodeCoverageResults@1
+    displayName: 'Publish Code Coverage to Azure DevOps'
+    inputs:
+      codeCoverageTool: 'Cobertura'
+      summaryFileLocation: '$(Build.ArtifactStagingDirectory)/CoverageReport/Cobertura.xml'
+
+  - task: SonarCloudAnalyze@1
+    displayName: 'Run SonarCloud Analysis'
+
+  - task: SonarCloudPublish@1
+    displayName: 'Publish SonarCloud Results'
+    inputs:
+      pollingTimeoutSec: '300'
