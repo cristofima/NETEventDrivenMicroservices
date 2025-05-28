@@ -2,7 +2,7 @@ trigger:
   branches:
     include:
       - main
-      - develop
+      - dev
       - feature/*
 
 variables:
@@ -21,7 +21,7 @@ steps:
       version: '9.x'
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
-  - task: SonarCloudPrepare@2
+  - task: SonarCloudPrepare@3
     displayName: 'Prepare SonarCloud Analysis'
     inputs:
       SonarCloud: 'SonarCloud'
@@ -68,10 +68,10 @@ steps:
       codeCoverageTool: 'Cobertura'
       summaryFileLocation: '$(Build.ArtifactStagingDirectory)/CoverageReport/Cobertura.xml'
 
-  - task: SonarCloudAnalyze@2
+  - task: SonarCloudAnalyze@3
     displayName: 'Run SonarCloud Analysis'
 
-  - task: SonarCloudPublish@2
+  - task: SonarCloudPublish@3
     displayName: 'Publish SonarCloud Results'
     inputs:
       pollingTimeoutSec: '300'
