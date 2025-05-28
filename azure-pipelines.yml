@@ -9,9 +9,6 @@ variables:
   buildConfiguration: 'Release'
   solution: 'EventDrivenMicroservicesSolution.sln'
   SONAR_SCANNER_MODE: 'MSBuild'
-  SONAR_PROJECT_KEY: $(SONAR_PROJECT_KEY)
-  SONAR_ORGANIZATION: $(SONAR_ORGANIZATION)
-  SONAR_TOKEN: $(SONAR_TOKEN)
 
 pool:
   vmImage: 'windows-latest'
