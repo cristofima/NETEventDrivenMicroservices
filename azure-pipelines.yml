@@ -51,7 +51,7 @@ steps:
       command: 'test'
       projects: |
         **/tests/**/*.csproj
-      arguments: '--configuration $(buildConfiguration) --collect:"XPlat Code Coverage" --results-directory $(Build.SourcesDirectory)/TestResults'
+      arguments: '--no-build --configuration $(buildConfiguration) --collect:"XPlat Code Coverage"'
       publishTestResults: true
 
   - task: ReportGenerator@5
