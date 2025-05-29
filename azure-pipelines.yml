@@ -51,15 +51,15 @@ steps:
       command: 'test'
       projects: |
         **/tests/**/*.csproj
-      arguments: '--configuration $(buildConfiguration) --collect:"XPlat Code Coverage"'
+      arguments: '--configuration $(buildConfiguration) --collect:"XPlat Code Coverage" --results-directory $(Build.SourcesDirectory)/TestResults'
       publishTestResults: true
 
   - task: ReportGenerator@5
     displayName: 'Generate Code Coverage Report'
     inputs:
-      reports: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+      reports: '$(Build.SourcesDirectory)/TestResults/**/coverage.cobertura.xml'
       targetdir: '$(Build.ArtifactStagingDirectory)/CoverageReport'
-      reporttypes: 'HtmlInline_AzurePipelines;Cobertura'
+      reporttypes: 'HtmlInline_AzurePipelines;Cobertura;opencover'
 
   - task: PublishCodeCoverageResults@2
     displayName: 'Publish Code Coverage to Azure DevOps'
