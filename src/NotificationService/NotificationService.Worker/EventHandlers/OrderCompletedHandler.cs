@@ -18,4 +18,9 @@ public class OrderCompletedHandler : IIntegrationEventHandler<OrderCompletedInte
             @event.OrderId, @event.CompletedDate);
         return Task.CompletedTask;
     }
+
+    async Task IIntegrationEventHandler.HandleAsync(IntegrationEvent integrationEvent, CancellationToken cancellationToken)
+    {
+        await HandleAsync((OrderCompletedIntegrationEvent)integrationEvent, cancellationToken);
+    }
 }
