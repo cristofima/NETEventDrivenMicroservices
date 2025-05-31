@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage">
+        <Configuration>
+          <ExcludeByFile>
+            **/Program.cs
+            **/DependencyInjection.cs
+            **/*Migrations*.cs
+          </ExcludeByFile>
+          <CodeCoverage>
+            <ModulePaths>
+              <Exclude>
+                <ModulePath>.*Tests.dll</ModulePath>
+              </Exclude>
+            </ModulePaths>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

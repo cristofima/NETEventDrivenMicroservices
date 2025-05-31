@@ -48,7 +48,10 @@ steps:
       command: 'test'
       projects: |
         **/tests/**/*.csproj
-      arguments: '--configuration $(buildConfiguration) --collect:"Code Coverage"'
+      arguments: >
+        --configuration $(buildConfiguration)
+        --settings $(Build.SourcesDirectory)/coverlet.runsettings
+        --collect:"Code Coverage"
       publishTestResults: true
 
   - task: PublishCodeCoverageResults@2
