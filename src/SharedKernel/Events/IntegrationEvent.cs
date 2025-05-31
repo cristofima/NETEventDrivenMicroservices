@@ -13,10 +13,4 @@ public abstract class IntegrationEvent
         Id = Guid.NewGuid();
         OccurredOn = DateTimeOffset.UtcNow;
     }
-
-    protected IntegrationEvent(Guid id, DateTimeOffset occurredOn)
-    {
-        Id = id;
-        OccurredOn = occurredOn;
-    }
 }

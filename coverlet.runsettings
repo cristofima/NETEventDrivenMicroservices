@@ -4,11 +4,6 @@
     <DataCollectors>
       <DataCollector friendlyName="Code Coverage">
         <Configuration>
-          <ExcludeByFile>
-            **/Program.cs
-            **/DependencyInjection.cs
-            **/*Migrations*.cs
-          </ExcludeByFile>
           <CodeCoverage>
             <ModulePaths>
               <Exclude>
