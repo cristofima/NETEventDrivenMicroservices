@@ -3,7 +3,7 @@ using OrderService.Domain.DTO;
 
 namespace OrderService.Application.Queries;
 
-public class GetOrderByIdQuery : IRequest<OrderViewModel?>
+public class GetOrderByIdQuery : IRequest<OrderViewModel>
 {
     public Guid OrderId { get; }
 

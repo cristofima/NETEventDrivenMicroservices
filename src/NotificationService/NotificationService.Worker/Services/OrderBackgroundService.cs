@@ -1,6 +1,6 @@
-﻿using System.Text.Json;
-using Azure.Messaging.ServiceBus;
+﻿using Azure.Messaging.ServiceBus;
 using NotificationService.Worker.Interfaces;
+using System.Text.Json;
 
 namespace NotificationService.Worker.Services;
 
@@ -64,29 +64,50 @@ public class OrderBackgroundService : BackgroundService
         var eventType = args.Message.Subject ?? "UnknownEvent";
         var sequenceNumber = args.Message.SequenceNumber;
 
+        await HandleMessageAsync(eventType, body, sequenceNumber, args);
+    }
+
+    public virtual async Task HandleMessageAsync(string eventType, string body, long sequenceNumber, ProcessMessageEventArgs args)
+    {
+        try
+        {
+            await HandleEventCoreAsync(eventType, body, sequenceNumber, args.CancellationToken);
+            await args.CompleteMessageAsync(args.Message, args.CancellationToken);
+        }
+        catch (JsonException jsonEx)
+        {
+            await args.DeadLetterMessageAsync(args.Message, "DeserializationError", jsonEx.Message, args.CancellationToken);
+        }
+        catch (Exception)
+        {
+            await args.AbandonMessageAsync(args.Message, null, args.CancellationToken);
+        }
+    }
+
+    public virtual async Task HandleEventCoreAsync(string eventType, string body, long sequenceNumber, CancellationToken cancellationToken)
+    {
         _logger.LogInformation("Received message: SequenceNumber={SequenceNumber}, Subject={Subject}, Body={Body}", sequenceNumber, eventType, body);
 
         try
         {
-            var handled = await _handlerFactory.TryHandleAsync(eventType, body, args.CancellationToken);
+            var handled = await _handlerFactory.TryHandleAsync(eventType, body, cancellationToken);
 
             if (!handled && eventType != "UnknownEvent")
             {
                 _logger.LogWarning("No handler found or deserialization failed for event type '{EventType}'.", eventType);
             }
 
-            await args.CompleteMessageAsync(args.Message, args.CancellationToken);
             _logger.LogInformation("Message {SequenceNumber} (Subject: {Subject}) completed successfully.", sequenceNumber, eventType);
         }
         catch (JsonException jsonEx)
         {
             _logger.LogError(jsonEx, "Deserialization failed for message {SequenceNumber} (Subject: {Subject}). Dead-lettering message.", sequenceNumber, eventType);
-            await args.DeadLetterMessageAsync(args.Message, "DeserializationError", jsonEx.Message, args.CancellationToken);
+            throw;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing message {SequenceNumber} (Subject: {Subject}). Abandoning for retry.", sequenceNumber, eventType);
-            await args.AbandonMessageAsync(args.Message, null, args.CancellationToken);
+            throw;
         }
     }
 

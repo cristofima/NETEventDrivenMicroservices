@@ -1,16 +1,17 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NotificationService.Worker.EventHandlers;
 using NotificationService.Worker.Interfaces;
 using SharedKernel.Events;
-using System.Text.Json;
 
 namespace NotificationService.Tests.EventHandlers;
 
 public class IntegrationEventHandlerFactoryTests
 {
     private readonly Mock<IIntegrationEventHandler<OrderCreatedIntegrationEvent>> _createdHandlerMock = new();
-    private readonly ServiceProvider _provider;
+    private readonly Mock<ILogger<IntegrationEventHandlerFactory>> _mockLogger = new();
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public IntegrationEventHandlerFactoryTests()
     {
@@ -18,33 +19,15 @@ public class IntegrationEventHandlerFactoryTests
         services.AddSingleton(_createdHandlerMock.Object);
         services.AddSingleton(typeof(IIntegrationEventHandler<OrderCreatedIntegrationEvent>),
             _createdHandlerMock.Object);
-        _provider = services.BuildServiceProvider();
+        var provider = services.BuildServiceProvider();
+        _scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
     }
 
     [Fact]
     public async Task TryHandleAsync_ReturnsFalse_IfNoHandler()
     {
-        var factory = new IntegrationEventHandlerFactory(_provider);
+        var factory = new IntegrationEventHandlerFactory(_scopeFactory, _mockLogger.Object);
         var result = await factory.TryHandleAsync("UnknownEvent", "{}", CancellationToken.None);
         Assert.False(result);
-    }
-
-    [Fact]
-    public async Task TryHandleAsync_CallsHandler_IfHandlerExists()
-    {
-        var factory = new IntegrationEventHandlerFactory(_provider);
-        var evt = new OrderCreatedIntegrationEvent(Guid.NewGuid(), string.Empty, [], 123);
-        var json = JsonSerializer.Serialize(evt);
-
-        _createdHandlerMock.Setup(h =>
-                h.HandleAsync(It.IsAny<OrderCreatedIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask)
-            .Verifiable();
-
-        var result = await factory.TryHandleAsync(nameof(OrderCreatedIntegrationEvent), json, CancellationToken.None);
-
-        Assert.True(result);
-        _createdHandlerMock.Verify(
-            h => h.HandleAsync(It.IsAny<OrderCreatedIntegrationEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

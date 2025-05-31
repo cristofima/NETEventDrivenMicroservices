@@ -13,8 +13,8 @@ public class Order
     public List<OrderItem> OrderItems { get; private set; }
     public decimal TotalAmount => OrderItems.Sum(item => item.Quantity * item.UnitPrice);
     public OrderStatus Status { get; private set; }
-    public string? TrackingNumber { get; set; } // Optional tracking number for shipping
-    public string? CancellationReason { get; set; }
+    public string TrackingNumber { get; set; } // Optional tracking number for shipping
+    public string CancellationReason { get; set; }
 
     // For EF Core
     private Order()

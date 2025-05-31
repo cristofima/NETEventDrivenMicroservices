@@ -14,8 +14,15 @@ public class OrderShippedHandler : IIntegrationEventHandler<OrderShippedIntegrat
 
     public Task HandleAsync(OrderShippedIntegrationEvent @event, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("OrderShipped: OrderId={OrderId}, ShippedDate={ShippedDate}, TrackingNumber={TrackingNumber}",
+        _logger.LogInformation(
+            "Handling OrderShippedIntegrationEvent: OrderId={OrderId}, ShippedDate={ShippedDate}, Tracking={Tracking}",
             @event.OrderId, @event.ShippedDate, @event.TrackingNumber ?? "N/A");
+
         return Task.CompletedTask;
+    }
+
+    async Task IIntegrationEventHandler.HandleAsync(IntegrationEvent integrationEvent, CancellationToken cancellationToken)
+    {
+        await HandleAsync((OrderShippedIntegrationEvent)integrationEvent, cancellationToken);
     }
 }

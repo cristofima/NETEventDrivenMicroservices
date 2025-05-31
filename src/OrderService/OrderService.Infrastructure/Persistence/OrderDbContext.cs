@@ -22,6 +22,8 @@ public class OrderDbContext : DbContext
             entity.Property(e => e.CustomerId).IsRequired().HasMaxLength(100);
             entity.Property(e => e.OrderDate).IsRequired();
             entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.TrackingNumber).IsRequired(false).HasMaxLength(25);
+            entity.Property(e => e.CancellationReason).IsRequired(false).HasMaxLength(250);
             entity.HasMany(e => e.OrderItems)
                   .WithOne(oi => oi.Order)
                   .HasForeignKey(oi => oi.OrderId)

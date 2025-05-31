@@ -20,17 +20,14 @@ steps:
       version: '9.x'
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
-  - task: SonarCloudPrepare@3
-    displayName: 'Prepare SonarCloud Analysis'
+  - task: SonarQubePrepare@7
+    displayName: 'Prepare SonarQube Analysis'
     inputs:
-      SonarCloud: 'SonarCloud'
+      SonarQube: 'SonarQube'
       organization: '$(SONAR_ORGANIZATION)'
       scannerMode: 'dotnet'
       projectKey: '$(SONAR_PROJECT_KEY)'
-      projectName: 'EventDrivenMicroservicesSolution'
-      extraProperties: |
-        sonar.exclusions=**/bin/**,**/obj/**
-        sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/**/coverage.opencover.xml
+      projectName: '$(SONAR_PROJECT_NAME)'
 
   - task: DotNetCoreCLI@2
     displayName: 'Restore NuGet packages'
@@ -51,15 +48,11 @@ steps:
       command: 'test'
       projects: |
         **/tests/**/*.csproj
-      arguments: '--configuration $(buildConfiguration) --collect:"XPlat Code Coverage"'
+      arguments: >
+        --configuration $(buildConfiguration)
+        --settings $(Build.SourcesDirectory)/coverlet.runsettings
+        --collect:"Code Coverage"
       publishTestResults: true
-
-  - task: ReportGenerator@5
-    displayName: 'Generate Code Coverage Report'
-    inputs:
-      reports: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
-      targetdir: '$(Build.ArtifactStagingDirectory)/CoverageReport'
-      reporttypes: 'HtmlInline_AzurePipelines;Cobertura'
 
   - task: PublishCodeCoverageResults@2
     displayName: 'Publish Code Coverage to Azure DevOps'
@@ -67,10 +60,4 @@ steps:
       codeCoverageTool: 'Cobertura'
       summaryFileLocation: '$(Build.ArtifactStagingDirectory)/CoverageReport/Cobertura.xml'
 
-  - task: SonarCloudAnalyze@3
-    displayName: 'Run SonarCloud Analysis'
-
-  - task: SonarCloudPublish@3
-    displayName: 'Publish SonarCloud Results'
-    inputs:
-      pollingTimeoutSec: '300'
+  - task: SonarQubeAnalyze@7

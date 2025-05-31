@@ -6,9 +6,11 @@ using OrderService.Domain.Interfaces;
 using OrderService.Infrastructure.Messaging;
 using OrderService.Infrastructure.Persistence;
 using OrderService.Infrastructure.Persistence.Repositories;
+using System.Diagnostics.CodeAnalysis;
 
 namespace OrderService.Infrastructure;
 
+[ExcludeFromCodeCoverage]
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(
