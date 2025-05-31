@@ -15,26 +15,26 @@ public class IntegrationEventHandlerFactory : IIntegrationEventHandlerFactory
         _logger = logger;
     }
 
-    public async Task<bool> TryHandleAsync(string eventTypeName, string messageBody, CancellationToken cancellationToken)
+    public async Task<bool> TryHandleAsync(string eventType, string body, CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var handler = GetHandlerByEventType(eventTypeName, provider);
+        var handler = GetHandlerByEventType(eventType, provider);
         if (handler is null)
         {
-            _logger.LogWarning("No handler found for event type '{EventType}'.", eventTypeName);
+            _logger.LogWarning("No handler found for event type '{EventType}'.", eventType);
             return false;
         }
 
-        var integrationEvent = DeserializeEvent(eventTypeName, messageBody);
+        var integrationEvent = DeserializeEvent(eventType, body);
         if (integrationEvent == null) return false;
 
         await handler.HandleAsync(integrationEvent, cancellationToken);
         return true;
     }
 
-    private IIntegrationEventHandler GetHandlerByEventType(string eventTypeName, IServiceProvider provider)
+    private static IIntegrationEventHandler GetHandlerByEventType(string eventTypeName, IServiceProvider provider)
     {
         return eventTypeName switch
         {
@@ -47,7 +47,7 @@ public class IntegrationEventHandlerFactory : IIntegrationEventHandlerFactory
         };
     }
 
-    private IntegrationEvent? DeserializeEvent(string eventTypeName, string messageBody)
+    private IntegrationEvent DeserializeEvent(string eventTypeName, string messageBody)
     {
         try
         {
