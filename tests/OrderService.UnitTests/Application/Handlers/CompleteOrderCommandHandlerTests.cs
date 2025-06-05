@@ -6,7 +6,9 @@ using OrderService.Application.Commands;
 using OrderService.Application.Events;
 using OrderService.Application.Handlers;
 using OrderService.Domain.Entities;
+using OrderService.Domain.Enums;
 using OrderService.Domain.Interfaces;
+using OrderService.Domain.Services;
 
 namespace OrderService.UnitTests.Application.Handlers;
 
@@ -19,7 +21,7 @@ public class CompleteOrderCommandHandlerTests
 
     public CompleteOrderCommandHandlerTests()
     {
-        _handler = new CompleteOrderCommandHandler(_orderRepository.Object, _mediator.Object, _logger.Object);
+        _handler = new CompleteOrderCommandHandler(_orderRepository.Object, _mediator.Object, _logger.Object, new OrderStatusTransitionService());
     }
 
     [Fact]

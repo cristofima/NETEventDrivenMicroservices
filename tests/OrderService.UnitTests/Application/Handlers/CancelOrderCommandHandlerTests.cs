@@ -6,7 +6,9 @@ using OrderService.Application.Commands;
 using OrderService.Application.Events;
 using OrderService.Application.Handlers;
 using OrderService.Domain.Entities;
+using OrderService.Domain.Enums;
 using OrderService.Domain.Interfaces;
+using OrderService.Domain.Services;
 
 namespace OrderService.UnitTests.Application.Handlers;
 
@@ -19,7 +21,7 @@ public class CancelOrderCommandHandlerTests
 
     public CancelOrderCommandHandlerTests()
     {
-        _handler = new CancelOrderCommandHandler(_orderRepository.Object, _mediator.Object, _logger.Object);
+        _handler = new CancelOrderCommandHandler(_orderRepository.Object, _mediator.Object, _logger.Object, new OrderStatusTransitionService());
     }
 
     [Fact]
@@ -37,7 +39,7 @@ public class CancelOrderCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_AlreadyCancelled_ReturnsTrue()
+    public async Task Handle_AlreadyCancelled_ReturnsFalse()
     {
         var order = new Order("cust", [new OrderItem("prod", 1, 1m)]);
         typeof(Order).GetProperty(nameof(Order.Status))!.SetValue(order, OrderStatus.Cancelled);
@@ -47,7 +49,7 @@ public class CancelOrderCommandHandlerTests
 
         var result = await _handler.Handle(command, default);
 
-        result.Should().BeTrue();
+        result.Should().BeFalse();
         _orderRepository.Verify(r => r.UpdateAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()), Times.Never);
         _mediator.Verify(m => m.Publish(It.IsAny<OrderCancelledDomainEvent>(), It.IsAny<CancellationToken>()), Times.Never);
     }

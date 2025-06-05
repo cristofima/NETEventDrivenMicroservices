@@ -6,6 +6,7 @@ using OrderService.Application.Commands;
 using OrderService.Application.Events;
 using OrderService.Application.Handlers;
 using OrderService.Domain.Entities;
+using OrderService.Domain.Enums;
 using OrderService.Domain.Interfaces;
 
 namespace OrderService.UnitTests.Application.Handlers;

@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using OrderService.Application.Commands;
-using OrderService.Domain.Entities;
+using OrderService.Domain.Enums;
 using OrderService.Domain.Interfaces;
 
 namespace OrderService.Application.Handlers;
@@ -11,15 +11,18 @@ public class ProcessOrderCommandHandler : IRequestHandler<ProcessOrderCommand, b
     private readonly IOrderRepository _orderRepository;
     private readonly IMediator _mediator;
     private readonly ILogger<ProcessOrderCommandHandler> _logger;
+    private readonly IOrderStatusTransitionService _statusTransitionService;
 
     public ProcessOrderCommandHandler(
         IOrderRepository orderRepository,
         IMediator mediator,
-        ILogger<ProcessOrderCommandHandler> logger)
+        ILogger<ProcessOrderCommandHandler> logger,
+        IOrderStatusTransitionService statusTransitionService)
     {
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _statusTransitionService = statusTransitionService ?? throw new ArgumentNullException(nameof(statusTransitionService)); ;
     }
 
     public async Task<bool> Handle(ProcessOrderCommand request, CancellationToken cancellationToken)
@@ -33,18 +36,21 @@ public class ProcessOrderCommandHandler : IRequestHandler<ProcessOrderCommand, b
             return false; // Or throw a NotFoundException
         }
 
-        // Add domain logic here if needed to check if the order can be processed
-        if (order.Status != OrderStatus.Pending) return false;
+        try
+        {
+            var processedAt = DateTimeOffset.UtcNow;
+            _statusTransitionService.ChangeStatus(order, OrderStatus.Processing, processedAt);
 
-        var processedDate = DateTimeOffset.UtcNow;
-        order.SetStatus(OrderStatus.Processing);
+            await _orderRepository.UpdateAsync(order, cancellationToken);
+            _logger.LogInformation("Order {OrderId} status updated to Processing.", order.Id);
 
-        await _orderRepository.UpdateAsync(order, cancellationToken);
-
-        _logger.LogInformation("Order {OrderId} status updated to Processing.", order.Id);
-
-        await _mediator.Publish(new OrderProcessedDomainEvent(order, processedDate), cancellationToken);
-
-        return true;
+            await _mediator.Publish(new OrderProcessedDomainEvent(order, processedAt), cancellationToken);
+            return true;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid status transition");
+            return false;
+        }
     }
 }
