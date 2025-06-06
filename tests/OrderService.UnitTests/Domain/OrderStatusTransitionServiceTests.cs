@@ -1,15 +1,14 @@
 ﻿using OrderService.Domain.Entities;
 using OrderService.Domain.Enums;
-using OrderService.Domain.Interfaces;
 using OrderService.Domain.Services;
 
 namespace OrderService.UnitTests.Domain;
 
 public class OrderStatusTransitionServiceTests
 {
-    private readonly IOrderStatusTransitionService _transitionService = new OrderStatusTransitionService();
+    private readonly OrderStatusTransitionService _transitionService = new();
 
-    private Order CreateOrderWithStatus(OrderStatus status)
+    private static Order CreateOrderWithStatus(OrderStatus status)
     {
         var order = new Order("customer-123", [new OrderItem("product-1", 1, 10.0m)]);
 

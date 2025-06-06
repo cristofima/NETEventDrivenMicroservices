@@ -22,7 +22,7 @@ public class ProcessOrderCommandHandler : IRequestHandler<ProcessOrderCommand, b
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _statusTransitionService = statusTransitionService ?? throw new ArgumentNullException(nameof(statusTransitionService)); ;
+        _statusTransitionService = statusTransitionService ?? throw new ArgumentNullException(nameof(statusTransitionService));
     }
 
     public async Task<bool> Handle(ProcessOrderCommand request, CancellationToken cancellationToken)

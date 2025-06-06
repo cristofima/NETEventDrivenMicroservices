@@ -1,14 +1,15 @@
 ﻿using MediatR;
 using OrderService.Application.Queries;
 using OrderService.Domain.DTO;
+using OrderService.Domain.Interfaces;
 
 namespace OrderService.Application.Handlers;
 
 public class GetOrderByIdQueryHandler : IRequestHandler<GetOrderByIdQuery, OrderViewModel>
 {
-    private readonly Domain.Interfaces.IOrderRepository _orderRepository;
+    private readonly IOrderRepository _orderRepository;
 
-    public GetOrderByIdQueryHandler(Domain.Interfaces.IOrderRepository orderRepository)
+    public GetOrderByIdQueryHandler(IOrderRepository orderRepository)
     { _orderRepository = orderRepository; }
 
     public async Task<OrderViewModel> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)

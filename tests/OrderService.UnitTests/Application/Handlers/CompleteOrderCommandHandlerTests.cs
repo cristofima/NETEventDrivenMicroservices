@@ -67,6 +67,7 @@ public class CompleteOrderCommandHandlerTests
 
         result.Should().BeTrue();
         order.Status.Should().Be(OrderStatus.Completed);
+        order.CompletedAt.Should().NotBeNull();
         _orderRepository.Verify(r => r.UpdateAsync(order, It.IsAny<CancellationToken>()), Times.Once);
         _mediator.Verify(m => m.Publish(It.Is<OrderCompletedDomainEvent>(e => e.Order == order), It.IsAny<CancellationToken>()), Times.Once);
     }

@@ -50,6 +50,7 @@ public class ProcessOrderCommandHandlerTests
         // Assert
         result.Should().BeTrue();
         existingOrder.Status.Should().Be(OrderStatus.Processing);
+        existingOrder.ProcessingStartedAt.Should().NotBeNull();
         _mockOrderRepository.Verify(r => r.UpdateAsync(existingOrder, It.IsAny<CancellationToken>()), Times.Once);
         _mockMediator.Verify(m => m.Publish(It.Is<OrderProcessedDomainEvent>(e =>
             e.Order.Id == orderId && e.Order.Status == OrderStatus.Processing

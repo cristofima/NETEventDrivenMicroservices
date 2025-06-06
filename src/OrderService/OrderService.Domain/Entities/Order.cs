@@ -34,7 +34,7 @@ public class Order
         OrderItems = items ?? throw new ArgumentNullException(nameof(items));
         Status = OrderStatus.Pending;
 
-        if (OrderItems != null && !OrderItems.Any())
+        if (!OrderItems.Any())
         {
             throw new ArgumentException("Order must have at least one item.");
         }

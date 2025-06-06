@@ -68,6 +68,7 @@ public class ShipOrderCommandHandlerTests
         result.Should().BeTrue();
         order.Status.Should().Be(OrderStatus.Shipped);
         order.TrackingNumber.Should().Be("TRACK123");
+        order.ShippedAt.Should().NotBeNull();
         _orderRepository.Verify(r => r.UpdateAsync(order, It.IsAny<CancellationToken>()), Times.Once);
         _mediator.Verify(m => m.Publish(It.Is<OrderShippedDomainEvent>(e => e.Order == order && e.TrackingNumber == "TRACK123"), It.IsAny<CancellationToken>()), Times.Once);
     }

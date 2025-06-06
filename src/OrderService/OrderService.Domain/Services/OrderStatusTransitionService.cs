@@ -8,7 +8,7 @@ public class OrderStatusTransitionService : IOrderStatusTransitionService
 {
     public void ChangeStatus(Order order, OrderStatus newStatus, DateTimeOffset eventDate, string reason = null)
     {
-        if (order == null) throw new ArgumentNullException(nameof(order));
+        ArgumentNullException.ThrowIfNull(order);
 
         switch (newStatus)
         {
@@ -41,7 +41,6 @@ public class OrderStatusTransitionService : IOrderStatusTransitionService
 
                 break;
 
-            case OrderStatus.Pending:
             default:
                 ThrowInvalidTransition(order.Status, newStatus);
                 break;
@@ -50,7 +49,7 @@ public class OrderStatusTransitionService : IOrderStatusTransitionService
         order.ApplyStatusTransition(newStatus, eventDate, reason);
     }
 
-    private void ThrowInvalidTransition(OrderStatus current, OrderStatus newStatus, string customMessage = null)
+    private static void ThrowInvalidTransition(OrderStatus current, OrderStatus newStatus, string customMessage = null)
     {
         throw new InvalidOperationException(customMessage ?? $"Invalid transition from {current} to {newStatus}.");
     }

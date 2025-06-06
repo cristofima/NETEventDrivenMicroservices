@@ -62,13 +62,13 @@ public class CreateOrderCommandHandlerTests
 
         // Check captured order details
         capturedOrder.Should().NotBeNull();
-        capturedOrder?.Id.Should().Be(resultOrderId);
-        capturedOrder?.CustomerId.Should().Be("customer1");
-        capturedOrder?.OrderItems.Should().HaveCount(1);
-        capturedOrder?.OrderItems.First().ProductId.Should().Be("product1");
-        capturedOrder?.OrderItems.First().Quantity.Should().Be(1);
-        capturedOrder?.OrderItems.First().UnitPrice.Should().Be(10.0m);
-        capturedOrder?.Status.Should().Be(OrderStatus.Pending);
+        capturedOrder.Id.Should().Be(resultOrderId);
+        capturedOrder.CustomerId.Should().Be("customer1");
+        capturedOrder.OrderItems.Should().HaveCount(1);
+        capturedOrder.OrderItems.First().ProductId.Should().Be("product1");
+        capturedOrder.OrderItems.First().Quantity.Should().Be(1);
+        capturedOrder.OrderItems.First().UnitPrice.Should().Be(10.0m);
+        capturedOrder.Status.Should().Be(OrderStatus.Pending);
     }
 
     [Fact]

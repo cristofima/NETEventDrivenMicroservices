@@ -20,10 +20,10 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, boo
         ILogger<CancelOrderCommandHandler> logger,
         IOrderStatusTransitionService statusTransitionService)
     {
-        _orderRepository = orderRepository;
-        _mediator = mediator;
-        _logger = logger;
-        _statusTransitionService = statusTransitionService;
+        _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _statusTransitionService = statusTransitionService ?? throw new ArgumentNullException(nameof(statusTransitionService));
     }
 
     public async Task<bool> Handle(CancelOrderCommand request, CancellationToken cancellationToken)
