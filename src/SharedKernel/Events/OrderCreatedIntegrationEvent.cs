@@ -15,8 +15,8 @@ public class OrderCreatedIntegrationEvent : IntegrationEvent
         : base()
     {
         OrderId = orderId;
-        CustomerId = customerId ?? throw new ArgumentNullException(nameof(customerId));
-        ProductItems = productItems ?? throw new ArgumentNullException(nameof(productItems));
+        CustomerId = customerId;
+        ProductItems = productItems;
         TotalAmount = totalAmount;
     }
 }
