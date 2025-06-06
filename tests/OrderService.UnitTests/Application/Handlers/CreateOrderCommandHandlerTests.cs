@@ -6,6 +6,7 @@ using OrderService.Application.Commands;
 using OrderService.Application.Events;
 using OrderService.Application.Handlers;
 using OrderService.Domain.Entities;
+using OrderService.Domain.Enums;
 using OrderService.Domain.Interfaces;
 
 namespace OrderService.UnitTests.Application.Handlers;
@@ -61,13 +62,13 @@ public class CreateOrderCommandHandlerTests
 
         // Check captured order details
         capturedOrder.Should().NotBeNull();
-        capturedOrder?.Id.Should().Be(resultOrderId);
-        capturedOrder?.CustomerId.Should().Be("customer1");
-        capturedOrder?.OrderItems.Should().HaveCount(1);
-        capturedOrder?.OrderItems.First().ProductId.Should().Be("product1");
-        capturedOrder?.OrderItems.First().Quantity.Should().Be(1);
-        capturedOrder?.OrderItems.First().UnitPrice.Should().Be(10.0m);
-        capturedOrder?.Status.Should().Be(OrderStatus.Pending);
+        capturedOrder.Id.Should().Be(resultOrderId);
+        capturedOrder.CustomerId.Should().Be("customer1");
+        capturedOrder.OrderItems.Should().HaveCount(1);
+        capturedOrder.OrderItems.First().ProductId.Should().Be("product1");
+        capturedOrder.OrderItems.First().Quantity.Should().Be(1);
+        capturedOrder.OrderItems.First().UnitPrice.Should().Be(10.0m);
+        capturedOrder.Status.Should().Be(OrderStatus.Pending);
     }
 
     [Fact]

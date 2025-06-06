@@ -5,7 +5,9 @@ using Moq;
 using OrderService.Application.Commands;
 using OrderService.Application.Handlers;
 using OrderService.Domain.Entities;
+using OrderService.Domain.Enums;
 using OrderService.Domain.Interfaces;
+using OrderService.Domain.Services;
 
 namespace OrderService.UnitTests.Application.Handlers;
 
@@ -23,7 +25,8 @@ public class ProcessOrderCommandHandlerTests
         _handler = new ProcessOrderCommandHandler(
             _mockOrderRepository.Object,
             _mockMediator.Object,
-            mockLogger.Object);
+            mockLogger.Object,
+            new OrderStatusTransitionService());
     }
 
     [Fact]
@@ -47,6 +50,7 @@ public class ProcessOrderCommandHandlerTests
         // Assert
         result.Should().BeTrue();
         existingOrder.Status.Should().Be(OrderStatus.Processing);
+        existingOrder.ProcessingStartedAt.Should().NotBeNull();
         _mockOrderRepository.Verify(r => r.UpdateAsync(existingOrder, It.IsAny<CancellationToken>()), Times.Once);
         _mockMediator.Verify(m => m.Publish(It.Is<OrderProcessedDomainEvent>(e =>
             e.Order.Id == orderId && e.Order.Status == OrderStatus.Processing

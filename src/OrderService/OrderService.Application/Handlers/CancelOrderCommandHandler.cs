@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using OrderService.Application.Commands;
 using OrderService.Application.Events;
-using OrderService.Domain.Entities;
+using OrderService.Domain.Enums;
 using OrderService.Domain.Interfaces;
 
 namespace OrderService.Application.Handlers;
@@ -12,15 +12,18 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, boo
     private readonly IOrderRepository _orderRepository;
     private readonly IMediator _mediator;
     private readonly ILogger<CancelOrderCommandHandler> _logger;
+    private readonly IOrderStatusTransitionService _statusTransitionService;
 
     public CancelOrderCommandHandler(
         IOrderRepository orderRepository,
         IMediator mediator,
-        ILogger<CancelOrderCommandHandler> logger)
+        ILogger<CancelOrderCommandHandler> logger,
+        IOrderStatusTransitionService statusTransitionService)
     {
-        _orderRepository = orderRepository;
-        _mediator = mediator;
-        _logger = logger;
+        _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _statusTransitionService = statusTransitionService ?? throw new ArgumentNullException(nameof(statusTransitionService));
     }
 
     public async Task<bool> Handle(CancelOrderCommand request, CancellationToken cancellationToken)
@@ -29,35 +32,25 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, boo
         var order = await _orderRepository.GetByIdAsync(request.OrderId, cancellationToken);
         if (order == null)
         {
-            _logger.LogWarning("Order {OrderId} not found for cancellation.", request.OrderId);
+            _logger.LogWarning("Order with Id {OrderId} not found.", request.OrderId);
             return false;
         }
 
-        switch (order.Status)
+        try
         {
-            // Add domain logic: e.g., order can only be cancelled if not Shipped or Completed.
-            case OrderStatus.Shipped:
-            case OrderStatus.Completed:
-                _logger.LogWarning("Order {OrderId} is already {Status} and cannot be cancelled.", order.Id, order.Status);
-                return false;
-            case OrderStatus.Cancelled:
-                _logger.LogInformation("Order {OrderId} is already cancelled.", order.Id);
-                return true; // Already in desired state
-            case OrderStatus.Pending:
-            case OrderStatus.Processing:
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
+            var cancelledDate = DateTimeOffset.UtcNow;
+            _statusTransitionService.ChangeStatus(order, OrderStatus.Cancelled, cancelledDate, request.Reason);
+
+            await _orderRepository.UpdateAsync(order, cancellationToken);
+            _logger.LogInformation("Order {OrderId} status updated to Cancelled. Reason: {Reason}", order.Id, request.Reason ?? "N/A");
+
+            await _mediator.Publish(new OrderCancelledDomainEvent(order, cancelledDate, request.Reason), cancellationToken);
+            return true;
         }
-
-        var cancelledDate = DateTimeOffset.UtcNow;
-        order.SetStatus(OrderStatus.Cancelled);
-        order.CancellationReason = request.Reason;
-
-        await _orderRepository.UpdateAsync(order, cancellationToken);
-        _logger.LogInformation("Order {OrderId} status updated to Cancelled. Reason: {Reason}", order.Id, request.Reason ?? "N/A");
-
-        await _mediator.Publish(new OrderCancelledDomainEvent(order, cancelledDate, request.Reason), cancellationToken);
-        return true;
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid status transition");
+            return false;
+        }
     }
 }

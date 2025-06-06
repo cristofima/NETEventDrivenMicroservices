@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using NotificationService.Worker.Interfaces;
 using NotificationService.Worker.Services;
+using System.Text.Json;
 
 namespace NotificationService.Tests.Services;
 
@@ -145,5 +146,63 @@ public class OrderBackgroundServiceTests
             It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("completed successfully")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleEventCoreAsync_HandlesJsonException_Logs()
+    {
+        // Arrange
+        var config = BuildConfig();
+        var logger = new Mock<ILogger<OrderBackgroundService>>();
+        var handlerFactory = new Mock<IIntegrationEventHandlerFactory>();
+        handlerFactory
+            .Setup(f => f.TryHandleAsync("TestEvent", "{}", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new JsonException("Test JSON error"));
+
+        var service = new OrderBackgroundService(config, logger.Object, handlerFactory.Object);
+
+        // Assert
+        await Assert.ThrowsAsync<JsonException>(Action);
+        logger.Verify(l => l.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, _) =>
+                state.ToString().Contains("Deserialization failed")),
+            It.IsAny<JsonException>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+        return;
+
+        // Act
+        async Task Action() => await service.HandleEventCoreAsync("TestEvent", "{}", 123, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task HandleEventCoreAsync_HandlesGenericException_Logs()
+    {
+        // Arrange
+        var logger = new Mock<ILogger<OrderBackgroundService>>();
+        var handlerFactory = new Mock<IIntegrationEventHandlerFactory>();
+        handlerFactory
+            .Setup(f => f.TryHandleAsync("TestEvent", "{}", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Generic failure"));
+
+        var config = BuildConfig();
+        var service = new OrderBackgroundService(config, logger.Object, handlerFactory.Object);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<Exception>(Action);
+
+        logger.Verify(l => l.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, _) =>
+                state.ToString().Contains("Error processing message")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+
+        return;
+
+        // Act
+        async Task Action() => await service.HandleEventCoreAsync("TestEvent", "{}", 123, CancellationToken.None);
     }
 }

@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using OrderService.Application.Commands;
 using OrderService.Application.Events;
-using OrderService.Domain.Entities;
+using OrderService.Domain.Enums;
 using OrderService.Domain.Interfaces;
 
 namespace OrderService.Application.Handlers;
@@ -12,15 +12,18 @@ public class CompleteOrderCommandHandler : IRequestHandler<CompleteOrderCommand,
     private readonly IOrderRepository _orderRepository;
     private readonly IMediator _mediator;
     private readonly ILogger<CompleteOrderCommandHandler> _logger;
+    private readonly IOrderStatusTransitionService _statusTransitionService;
 
     public CompleteOrderCommandHandler(
         IOrderRepository orderRepository,
         IMediator mediator,
-        ILogger<CompleteOrderCommandHandler> logger)
+        ILogger<CompleteOrderCommandHandler> logger,
+        IOrderStatusTransitionService statusTransitionService)
     {
-        _orderRepository = orderRepository;
-        _mediator = mediator;
-        _logger = logger;
+        _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _statusTransitionService = statusTransitionService ?? throw new ArgumentNullException(nameof(statusTransitionService));
     }
 
     public async Task<bool> Handle(CompleteOrderCommand request, CancellationToken cancellationToken)
@@ -29,24 +32,25 @@ public class CompleteOrderCommandHandler : IRequestHandler<CompleteOrderCommand,
         var order = await _orderRepository.GetByIdAsync(request.OrderId, cancellationToken);
         if (order == null)
         {
-            _logger.LogWarning("Order {OrderId} not found for completion.", request.OrderId);
+            _logger.LogWarning("Order with Id {OrderId} not found.", request.OrderId);
             return false;
         }
 
-        // Add domain logic: e.g., order must be in 'Shipped' state to be completed.
-        if (order.Status != OrderStatus.Shipped)
+        try
         {
-            _logger.LogWarning("Order {OrderId} is not in Shipped state. Current state: {Status}. Cannot complete.", order.Id, order.Status);
+            var completedDate = DateTimeOffset.UtcNow;
+            _statusTransitionService.ChangeStatus(order, OrderStatus.Completed, completedDate);
+
+            await _orderRepository.UpdateAsync(order, cancellationToken);
+            _logger.LogInformation("Order {OrderId} status updated to Completed.", order.Id);
+
+            await _mediator.Publish(new OrderCompletedDomainEvent(order, completedDate), cancellationToken);
+            return true;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid status transition");
             return false;
         }
-
-        var completedDate = DateTimeOffset.UtcNow;
-        order.SetStatus(OrderStatus.Completed);
-
-        await _orderRepository.UpdateAsync(order, cancellationToken);
-        _logger.LogInformation("Order {OrderId} status updated to Completed.", order.Id);
-
-        await _mediator.Publish(new OrderCompletedDomainEvent(order, completedDate), cancellationToken);
-        return true;
     }
 }
