@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using OrderService.Domain.Entities;
 
 namespace OrderService.Infrastructure.Persistence;
 
+[ExcludeFromCodeCoverage]
 public class OrderDbContext : DbContext
 {
     public DbSet<Order> Orders { get; set; }

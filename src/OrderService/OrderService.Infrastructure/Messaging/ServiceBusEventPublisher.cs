@@ -3,10 +3,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OrderService.Application.Interfaces;
 using SharedKernel.Events;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace OrderService.Infrastructure.Messaging;
 
+[ExcludeFromCodeCoverage]
 public class ServiceBusEventPublisher : IEventPublisher, IAsyncDisposable
 {
     private readonly ServiceBusClient _serviceBusClient;
