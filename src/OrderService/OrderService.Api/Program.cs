@@ -1,3 +1,6 @@
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using OrderService.Api;
 using OrderService.Application;
 using OrderService.Infrastructure;
 using OrderService.Infrastructure.Persistence;
@@ -5,18 +8,10 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-
-// Configure Application Insights
-builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
-
 // Register services from other layers using extension methods
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddWebApiServices(builder.Configuration);
 
 // Configure logging
 builder.Logging.ClearProviders();
@@ -58,5 +53,17 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map Health Checks endpoint
+app.MapHealthChecks("/healthz", new HealthCheckOptions
+{
+    Predicate = _ => true, // Include all health checks
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse // Nicer JSON output
+});
+
+app.MapHealthChecks("/healthz-liveness", new HealthCheckOptions
+{
+    Predicate = r => r.Name.Contains("self") // Basic liveness check
+});
 
 app.Run();
