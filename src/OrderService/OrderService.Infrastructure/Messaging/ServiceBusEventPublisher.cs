@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OrderService.Application.Interfaces;
+using Polly;
+using Polly.Retry;
 using SharedKernel.Events;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
@@ -15,6 +17,7 @@ public class ServiceBusEventPublisher : IEventPublisher, IAsyncDisposable
     private readonly ServiceBusSender _serviceBusSender;
     private readonly ILogger<ServiceBusEventPublisher> _logger;
     private readonly string _topicName;
+    private readonly AsyncRetryPolicy _retryPolicy;
 
     public ServiceBusEventPublisher(IConfiguration configuration, ILogger<ServiceBusEventPublisher> logger)
     {
@@ -35,6 +38,18 @@ public class ServiceBusEventPublisher : IEventPublisher, IAsyncDisposable
 
         _serviceBusClient = new ServiceBusClient(connectionString);
         _serviceBusSender = _serviceBusClient.CreateSender(_topicName);
+
+        // Define a Polly retry policy for publishing
+        _retryPolicy = Policy
+            .Handle<ServiceBusException>(ex => ex.IsTransient) // Retry only on transient Service Bus errors
+            .Or<TimeoutException>()
+            .WaitAndRetryAsync(
+                retryCount: 3,
+                sleepDurationProvider: attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)), // Exponential backoff: 2s, 4s, 8s
+                onRetry: (exception, timespan, attempt, context) =>
+                {
+                    _logger.LogWarning(exception, "Error publishing event to Service Bus. Retrying in {Timespan}. Attempt {Attempt}", timespan, attempt);
+                });
     }
 
     public async Task PublishAsync<T>(T integrationEvent, CancellationToken cancellationToken = default) where T : IntegrationEvent
@@ -53,18 +68,13 @@ public class ServiceBusEventPublisher : IEventPublisher, IAsyncDisposable
             Subject = eventName // Useful for filtering on the subscriber side if needed
         };
 
-        try
+        // Execute publish action with Polly retry policy
+        await _retryPolicy.ExecuteAsync(async token =>
         {
-            await _serviceBusSender.SendMessageAsync(serviceBusMessage, cancellationToken);
+            await _serviceBusSender.SendMessageAsync(serviceBusMessage, token);
             _logger.LogInformation("Event {EventName} with ID {EventId} sent successfully to topic {TopicName}.",
                 eventName, integrationEvent.Id, _topicName);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error sending event {EventName} with ID {EventId} to topic {TopicName}.",
-                eventName, integrationEvent.Id, _topicName);
-            throw; // Re-throw to allow for retry mechanisms or other error handling
-        }
+        }, cancellationToken);
     }
 
     public async ValueTask DisposeAsync()
