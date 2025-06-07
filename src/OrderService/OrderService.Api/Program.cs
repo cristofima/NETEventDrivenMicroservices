@@ -5,6 +5,7 @@ using OrderService.Application;
 using OrderService.Infrastructure;
 using OrderService.Infrastructure.Persistence;
 using Scalar.AspNetCore;
+using System.Diagnostics.CodeAnalysis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,3 +68,7 @@ app.MapHealthChecks("/healthz-liveness", new HealthCheckOptions
 });
 
 app.Run();
+
+[ExcludeFromCodeCoverage]
+public partial class Program
+{ }

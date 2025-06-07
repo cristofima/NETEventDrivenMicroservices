@@ -2,6 +2,7 @@ using NotificationService.Worker.EventHandlers;
 using NotificationService.Worker.Interfaces;
 using NotificationService.Worker.Services;
 using SharedKernel.Events;
+using System.Diagnostics.CodeAnalysis;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>
@@ -12,7 +13,7 @@ var host = Host.CreateDefaultBuilder(args)
         {
             options.ConnectionString = hostContext.Configuration["ApplicationInsights:ConnectionString"];
         });
-        
+
         services.AddSingleton<IIntegrationEventHandlerFactory, IntegrationEventHandlerFactory>();
 
         services.AddScoped<IIntegrationEventHandler<OrderCreatedIntegrationEvent>, OrderCreatedHandler>();
@@ -20,7 +21,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<IIntegrationEventHandler<OrderShippedIntegrationEvent>, OrderShippedHandler>();
         services.AddScoped<IIntegrationEventHandler<OrderCompletedIntegrationEvent>, OrderCompletedHandler>();
         services.AddScoped<IIntegrationEventHandler<OrderCancelledIntegrationEvent>, OrderCancelledHandler>();
-        
+
         // Register the background service that handles events
         services.AddHostedService<OrderBackgroundService>();
 
@@ -35,3 +36,7 @@ var host = Host.CreateDefaultBuilder(args)
     .Build();
 
 await host.RunAsync();
+
+[ExcludeFromCodeCoverage]
+public partial class Program
+{ }
